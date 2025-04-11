@@ -134,6 +134,14 @@ For the best onboarding experience with the packages in this monorepo, we recomm
 Demos of the Computer-Use Agent in action. Share your most impressive demos in Cua's [Discord community](https://discord.com/invite/mVnXXpdE85)!
 
 <details open>
+<summary><b>MCP Server: Work with Claude Desktop and Tableau </b></summary>
+<br>
+<div align="center">
+    <video src="https://github.com/user-attachments/assets/9f573547-5149-493e-9a72-396f3cff29df
+" width="800" controls></video>
+</div>
+
+<details open>
 <summary><b>AI-Gradio: multi-app workflow requiring browser, VS Code and terminal access</b></summary>
 <br>
 <div align="center">
@@ -170,9 +178,11 @@ Join our [Discord community](https://discord.com/invite/mVnXXpdE85) to discuss i
 
 Cua is open-sourced under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+Microsoft's OmniParser, which is used in this project, is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0) - see the [OmniParser LICENSE](https://github.com/microsoft/OmniParser/blob/master/LICENSE) file for details.
+
 ## Trademarks
 
-Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonical are registered trademarks of Canonical Ltd. This project is not affiliated with, endorsed by, or sponsored by Apple Inc. or Canonical Ltd.
+Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonical are registered trademarks of Canonical Ltd. Microsoft is a registered trademark of Microsoft Corporation. This project is not affiliated with, endorsed by, or sponsored by Apple Inc., Canonical Ltd., or Microsoft Corporation.
 
 ## Stargazers over time
 
@@ -197,6 +207,7 @@ Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonica
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ddupont808"><img src="https://avatars.githubusercontent.com/u/3820588?v=4?s=100" width="100px;" alt="ddupont"/><br /><sub><b>ddupont</b></sub></a><br /><a href="#code-ddupont808" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Lizzard1123"><img src="https://avatars.githubusercontent.com/u/46036335?v=4?s=100" width="100px;" alt="Ethan Gutierrez"/><br /><sub><b>Ethan Gutierrez</b></sub></a><br /><a href="#code-Lizzard1123" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ricterz.me"><img src="https://avatars.githubusercontent.com/u/5282759?v=4?s=100" width="100px;" alt="Ricter Zheng"/><br /><sub><b>Ricter Zheng</b></sub></a><br /><a href="#code-RicterZ" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
