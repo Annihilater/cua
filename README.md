@@ -13,17 +13,17 @@
   [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?&logo=discord&logoColor=white)](https://discord.com/invite/mVnXXpdE85)
 </div>
 
-Cua (pronounced "koo-ah", short for Computer-Use Agent) is an open-source framework that combines high-performance virtualization with AI agent capabilities to enable secure, isolated environments for AI systems to interact with desktop applications.
+**TL;DR**: **c/ua** (pronounced "koo-ah", short for Computer-Use Agent) is a framework that enables AI agents to control full operating systems within high-performance, lightweight virtual containers. It delivers up to 97% native speed on Apple Silicon and works with any vision language models.
 
-## What is Cua?
+## What is c/ua?
 
-Cua offers two primary capabilities in a single integrated framework:
+**c/ua** offers two primary capabilities in a single integrated framework:
 
-1. **High-Performance Virtualization** - Create and run macOS/Linux virtual machines on Apple Silicon with near-native performance (up to 90% of native speed) using `Apple's Virtualization.Framework`.
+1. **High-Performance Virtualization** - Create and run macOS/Linux virtual machines on Apple Silicon with near-native performance (up to 97% of native speed) using the **Lume CLI** with `Apple's Virtualization.Framework`.
 
 2. **Computer-Use Interface & Agent** - A framework that allows AI systems to observe and control these virtual environments - interacting with applications, browsing the web, writing code, and performing complex workflows.
 
-## Why Use Cua?
+## Why Use c/ua?
 
 - **Security & Isolation**: Run AI agents in fully isolated virtual environments instead of giving them access to your main system
 - **Performance**: [Near-native performance](https://browser.geekbench.com/v6/cpu/compare/11283746?baseline=11102709) on Apple Silicon
@@ -34,9 +34,9 @@ Cua offers two primary capabilities in a single integrated framework:
 ## System Requirements
 
 - Mac with Apple Silicon (M1/M2/M3/M4 series)
-- macOS 14 (Sonoma) or newer
-- Python 3.10+ (for Computer and Agent libraries)
-- Disk space for VM images (40GB+ recommended)
+- macOS 15 (Sequoia) or newer
+- Python 3.10+ (required for the Computer, Agent, and MCP libraries). We recommend using Conda (or Anaconda) to create an ad hoc Python environment.
+- Disk space for VM images (30GB+ recommended)
 
 ## Quick Start
 
@@ -57,15 +57,25 @@ If you want to use AI agents with virtualized environments:
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/lume/scripts/install.sh)"
    ```
 
-2. Install the Python libraries:
+2. Pull the latest macOS CUA image:
+   ```bash
+   lume pull macos-sequoia-cua:latest
+   ```
+
+3. Start Lume daemon service:
+   ```bash
+   lume serve
+   ```
+
+4. Install the Python libraries:
    ```bash
    pip install cua-computer cua-agent[all]
    ```
 
-3. Use the libraries in your Python code:
+5. Use the libraries in your Python code:
    ```python
-   from cua.computer import Computer
-   from cua.agent import ComputerAgent, LLM, AgentLoop, LLMProvider
+   from computer import Computer
+   from agent import ComputerAgent, LLM, AgentLoop, LLMProvider
 
    async with Computer(verbosity=logging.DEBUG) as macos_computer:
      agent = ComputerAgent(
@@ -85,7 +95,7 @@ If you want to use AI agents with virtualized environments:
    
    Explore the [Agent Notebook](./notebooks/) for a ready-to-run example.
 
-4. Optionally, you can use the Agent with a Gradio UI:
+6. Optionally, you can use the Agent with a Gradio UI:
 
    ```python
    from utils import load_dotenv_files
@@ -97,14 +107,16 @@ If you want to use AI agents with virtualized environments:
    app.launch(share=False)
    ```
 
-5. For Developers only (contribute and use latest features):
+### Option 3: Build from Source (Nightly)
+If you want to contribute to the project or need the latest nightly features:
+
    ```bash
    # Clone the repository
    git clone https://github.com/trycua/cua.git
    cd cua
    
    # Open the project in VSCode
-   code ./vscode/py.code-workspace
+   code ./.vscode/py.code-workspace
 
    # Build the project
    ./scripts/build.sh
@@ -132,6 +144,14 @@ For the best onboarding experience with the packages in this monorepo, we recomm
 ## Demos
 
 Demos of the Computer-Use Agent in action. Share your most impressive demos in Cua's [Discord community](https://discord.com/invite/mVnXXpdE85)!
+
+<details open>
+<summary><b>MCP Server: Work with Claude Desktop and Tableau </b></summary>
+<br>
+<div align="center">
+    <video src="https://github.com/user-attachments/assets/9f573547-5149-493e-9a72-396f3cff29df
+" width="800" controls></video>
+</div>
 
 <details open>
 <summary><b>AI-Gradio: multi-app workflow requiring browser, VS Code and terminal access</b></summary>
@@ -170,9 +190,11 @@ Join our [Discord community](https://discord.com/invite/mVnXXpdE85) to discuss i
 
 Cua is open-sourced under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+Microsoft's OmniParser, which is used in this project, is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0) - see the [OmniParser LICENSE](https://github.com/microsoft/OmniParser/blob/master/LICENSE) file for details.
+
 ## Trademarks
 
-Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonical are registered trademarks of Canonical Ltd. This project is not affiliated with, endorsed by, or sponsored by Apple Inc. or Canonical Ltd.
+Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonical are registered trademarks of Canonical Ltd. Microsoft is a registered trademark of Microsoft Corporation. This project is not affiliated with, endorsed by, or sponsored by Apple Inc., Canonical Ltd., or Microsoft Corporation.
 
 ## Stargazers over time
 
@@ -197,6 +219,15 @@ Apple, macOS, and Apple Silicon are trademarks of Apple Inc. Ubuntu and Canonica
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ddupont808"><img src="https://avatars.githubusercontent.com/u/3820588?v=4?s=100" width="100px;" alt="ddupont"/><br /><sub><b>ddupont</b></sub></a><br /><a href="#code-ddupont808" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Lizzard1123"><img src="https://avatars.githubusercontent.com/u/46036335?v=4?s=100" width="100px;" alt="Ethan Gutierrez"/><br /><sub><b>Ethan Gutierrez</b></sub></a><br /><a href="#code-Lizzard1123" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ricterz.me"><img src="https://avatars.githubusercontent.com/u/5282759?v=4?s=100" width="100px;" alt="Ricter Zheng"/><br /><sub><b>Ricter Zheng</b></sub></a><br /><a href="#code-RicterZ" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.trytruffle.ai/"><img src="https://avatars.githubusercontent.com/u/50844303?v=4?s=100" width="100px;" alt="Rahul Karajgikar"/><br /><sub><b>Rahul Karajgikar</b></sub></a><br /><a href="#code-rahulkarajgikar" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/trospix"><img src="https://avatars.githubusercontent.com/u/81363696?v=4?s=100" width="100px;" alt="trospix"/><br /><sub><b>trospix</b></sub></a><br /><a href="#code-trospix" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://wavee.world/invitation/b96d00e6-b802-4a1b-8a66-2e3854a01ffd"><img src="https://avatars.githubusercontent.com/u/22633385?v=4?s=100" width="100px;" alt="Ikko Eltociear Ashimine"/><br /><sub><b>Ikko Eltociear Ashimine</b></sub></a><br /><a href="#code-eltociear" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dp221125"><img src="https://avatars.githubusercontent.com/u/10572119?v=4?s=100" width="100px;" alt="한석호(MilKyo)"/><br /><sub><b>한석호(MilKyo)</b></sub></a><br /><a href="#code-dp221125" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.encona.com/"><img src="https://avatars.githubusercontent.com/u/891558?v=4?s=100" width="100px;" alt="Rahim Nathwani"/><br /><sub><b>Rahim Nathwani</b></sub></a><br /><a href="#code-rahimnathwani" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://mjspeck.github.io/"><img src="https://avatars.githubusercontent.com/u/20689127?v=4?s=100" width="100px;" alt="Matt Speck"/><br /><sub><b>Matt Speck</b></sub></a><br /><a href="#code-mjspeck" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
