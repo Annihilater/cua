@@ -30,16 +30,18 @@ async def run_agent_example():
                 computer=macos_computer,
                 # loop=AgentLoop.OPENAI,
                 # loop=AgentLoop.ANTHROPIC,
+                # loop=AgentLoop.UITARS,
                 loop=AgentLoop.OMNI,
                 # model=LLM(provider=LLMProvider.OPENAI),  # No model name for Operator CUA
                 # model=LLM(provider=LLMProvider.OPENAI, name="gpt-4o"),
-                model=LLM(provider=LLMProvider.ANTHROPIC, name="claude-3-7-sonnet-20250219"),
+                # model=LLM(provider=LLMProvider.ANTHROPIC, name="claude-3-7-sonnet-20250219"),
                 # model=LLM(provider=LLMProvider.OLLAMA, name="gemma3:4b-it-q4_K_M"),
-                # model=LLM(
-                #     provider=LLMProvider.OAICOMPAT,
-                #     name="qwen2.5-vl-7b-instruct",
-                #     provider_base_url="http://localhost:1234/v1",  # LM Studio local endpoint
-                # ),
+                # model=LLM(provider=LLMProvider.MLXVLM, name="mlx-community/UI-TARS-1.5-7B-4bit"),
+                model=LLM(
+                    provider=LLMProvider.OAICOMPAT,
+                    name="gemma-3-12b-it",
+                    provider_base_url="http://localhost:1234/v1",  # LM Studio local endpoint
+                ),
                 save_trajectory=True,
                 only_n_most_recent_images=3,
                 verbosity=logging.DEBUG,

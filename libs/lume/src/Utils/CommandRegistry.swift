@@ -5,6 +5,7 @@ enum CommandRegistry {
         [
             Create.self,
             Pull.self,
+            Push.self,
             Images.self,
             Clone.self,
             Get.self,
@@ -15,7 +16,9 @@ enum CommandRegistry {
             IPSW.self,
             Serve.self,
             Delete.self,
-            Prune.self
+            Prune.self,
+            Config.self,
+            Logs.self,
         ]
     }
 }

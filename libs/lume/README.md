@@ -52,7 +52,9 @@ Commands:
   lume stop <name>              Stop a running VM
   lume delete <name>            Delete a VM
   lume pull <image>             Pull a macOS image from container registry
+  lume push <name> <image:tag>  Push a VM image to a container registry
   lume clone <name> <new-name>  Clone an existing VM
+  lume config                   Get or set lume configuration
   lume images                   List available macOS images in local cache
   lume ipsw                     Get the latest macOS restore image URL
   lume prune                    Remove cached images
@@ -70,6 +72,7 @@ Command Options:
     --disk-size <size>   Disk size, e.g., 50GB (default: 40GB)
     --display <res>      Display resolution (default: 1024x768)
     --ipsw <path>        Path to IPSW file or 'latest' for macOS VMs
+    --storage <name>     VM storage location to use
 
   run:
     --no-display                Do not start the VNC client app
@@ -79,22 +82,61 @@ Command Options:
     --organization <org>        Organization to pull from (default: trycua)
     --vnc-port <port>           Port to use for the VNC server (default: 0 for auto-assign)
     --recovery-mode <boolean>   For MacOS VMs only, start VM in recovery mode (default: false)
+    --storage <name>            VM storage location to use
 
   set:
     --cpu <cores>        New number of CPU cores (e.g., 4)
     --memory <size>      New memory size (e.g., 8192MB or 8GB)
     --disk-size <size>   New disk size (e.g., 40960MB or 40GB)
     --display <res>      New display resolution in format WIDTHxHEIGHT (e.g., 1024x768)
+    --storage <name>     VM storage location to use
 
   delete:
     --force              Force deletion without confirmation
+    --storage <name>     VM storage location to use
 
   pull:
     --registry <url>     Container registry URL (default: ghcr.io)
     --organization <org> Organization to pull from (default: trycua)
+    --storage <name>     VM storage location to use
+
+  push:
+    --additional-tags <tags...>  Additional tags to push the same image to
+    --registry <url>            Container registry URL (default: ghcr.io)
+    --organization <org>        Organization/user to push to (default: trycua)
+    --storage <name>            VM storage location to use
+    --chunk-size-mb <size>      Chunk size for disk image upload in MB (default: 512)
+    --verbose                   Enable verbose logging
+    --dry-run                   Prepare files and show plan without uploading
+    --reassemble                Verify integrity by reassembling chunks (requires --dry-run)
+
+  get:
+    -f, --format <format> Output format (json|text)
+    --storage <name>      VM storage location to use
+
+  stop:
+    --storage <name>     VM storage location to use
+
+  clone:
+    --source-storage <name> Source VM storage location
+    --dest-storage <name>   Destination VM storage location
+
+  config:
+    get                  Get current configuration
+    storage              Manage VM storage locations
+      add <name> <path>  Add a new VM storage location
+      remove <name>      Remove a VM storage location
+      list               List all VM storage locations
+      default <name>     Set the default VM storage location
+    cache                Manage cache settings
+      get                Get current cache directory
+      set <path>         Set cache directory
+    caching              Manage image caching settings
+      get                Show current caching status
+      set <boolean>      Enable or disable image caching
 
   serve:
-    --port <port>        Port to listen on (default: 3000)
+    --port <port>        Port to listen on (default: 7777)
 ```
 
 ## Install
@@ -105,27 +147,38 @@ Install with a single command:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/lume/scripts/install.sh)"
 ```
 
+By default, Lume is installed as a background service that starts automatically on login. If you prefer to start the Lume API service manually when needed, you can use the `--no-background-service` option:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/lume/scripts/install.sh) --no-background-service"
+```
+
+**Note:** With this option, you'll need to manually start the Lume API service by running `lume serve` in your terminal whenever you need to use tools or libraries that rely on the Lume API (such as the Computer-Use Agent).
+
 You can also download the `lume.pkg.tar.gz` archive from the [latest release](https://github.com/trycua/lume/releases), extract it, and install the package manually.
 
 ## Prebuilt Images
 
 Pre-built images are available in the registry [ghcr.io/trycua](https://github.com/orgs/trycua/packages). 
+
+**Important Note (v0.2.0+):** Images are being re-uploaded with sparse file system optimizations enabled, resulting in significantly lower actual disk usage. Older images (without the `-sparse` suffix) are now **deprecated**. The last version of `lume` fully supporting the non-sparse images was `v0.1.x`. Starting from `v0.2.0`, lume will automatically pull images optimized with sparse file system support.
+
 These images come with an SSH server pre-configured and auto-login enabled.
 
 For the security of your VM, change the default password `lume` immediately after your first login.
 
-| Image | Tag | Description | Size |
+| Image | Tag | Description | Logical Size |
 |-------|------------|-------------|------|
-| `macos-sequoia-vanilla` | `latest`, `15.2` | macOS Sequoia 15.2 image | 40GB |
-| `macos-sequoia-xcode` | `latest`, `15.2` | macOS Sequoia 15.2 image with Xcode command line tools | 50GB |
-| `macos-sequoia-cua` | `latest`, `15.3` | macOS Sequoia 15.3 image compatible with the Computer interface | 80GB |
+| `macos-sequoia-vanilla` | `latest`, `15.2` | macOS Sequoia 15.2 image | 20GB |
+| `macos-sequoia-xcode` | `latest`, `15.2` | macOS Sequoia 15.2 image with Xcode command line tools | 22GB |
+| `macos-sequoia-cua` | `latest`, `15.3` | macOS Sequoia 15.3 image compatible with the Computer interface | 24GB |
 | `ubuntu-noble-vanilla` | `latest`, `24.04.1` | [Ubuntu Server for ARM 24.04.1 LTS](https://ubuntu.com/download/server/arm) with Ubuntu Desktop | 20GB |
 
-For additional disk space, resize the VM disk after pulling the image using the `lume set <name> --disk-size <size>` command.
+For additional disk space, resize the VM disk after pulling the image using the `lume set <name> --disk-size <size>` command. Note that the actual disk space used by sparse images will be much lower than the logical size listed.
 
 ## Local API Server
   
-`lume` exposes a local HTTP API server that listens on `http://localhost:3000/lume`, enabling automated management of VMs.
+`lume` exposes a local HTTP API server that listens on `http://localhost:7777/lume`, enabling automated management of VMs.
 
 ```bash
 lume serve

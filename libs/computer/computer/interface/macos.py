@@ -17,7 +17,6 @@ class MacOSComputerInterface(BaseComputerInterface):
 
     def __init__(self, ip_address: str, username: str = "lume", password: str = "lume"):
         super().__init__(ip_address, username, password)
-        self.ws_uri = f"ws://{ip_address}:8000/ws"
         self._ws = None
         self._reconnect_task = None
         self._closed = False
@@ -30,6 +29,15 @@ class MacOSComputerInterface(BaseComputerInterface):
 
         # Set logger name for MacOS interface
         self.logger = Logger("cua.interface.macos", LogLevel.NORMAL)
+
+    @property
+    def ws_uri(self) -> str:
+        """Get the WebSocket URI using the current IP address.
+        
+        Returns:
+            WebSocket URI for the Computer API Server
+        """
+        return f"ws://{self.ip_address}:8000/ws"
 
     async def _keep_alive(self):
         """Keep the WebSocket connection alive with automatic reconnection."""
@@ -328,9 +336,22 @@ class MacOSComputerInterface(BaseComputerInterface):
             "drag_to", {"x": x, "y": y, "button": button, "duration": duration}
         )
 
+    async def drag(self, path: List[Tuple[int, int]], button: str = "left", duration: float = 0.5) -> None:
+        await self._send_command(
+            "drag", {"path": path, "button": button, "duration": duration}
+        )
+
     # Keyboard Actions
     async def type_text(self, text: str) -> None:
-        await self._send_command("type_text", {"text": text})
+        # Temporary fix for https://github.com/trycua/cua/issues/165
+        # Check if text contains Unicode characters
+        if any(ord(char) > 127 for char in text):
+            # For Unicode text, use clipboard and paste
+            await self.set_clipboard(text)
+            await self.hotkey(Key.COMMAND, 'v')
+        else:
+            # For ASCII text, use the regular typing method
+            await self._send_command("type_text", {"text": text})
 
     async def press(self, key: "KeyType") -> None:
         """Press a single key.
@@ -377,17 +398,47 @@ class MacOSComputerInterface(BaseComputerInterface):
         """
         await self.press(key)
 
-    async def hotkey(self, *keys: str) -> None:
-        await self._send_command("hotkey", {"keys": list(keys)})
+    async def hotkey(self, *keys: "KeyType") -> None:
+        """Press multiple keys simultaneously.
+
+        Args:
+            *keys: Multiple keys to press simultaneously. Each key can be any of:
+                - A Key enum value (recommended), e.g. Key.COMMAND
+                - A direct key value string, e.g. 'command'
+                - A single character string, e.g. 'a'
+
+        Examples:
+            ```python
+            # Using enums (recommended)
+            await interface.hotkey(Key.COMMAND, Key.C)  # Copy
+            await interface.hotkey(Key.COMMAND, Key.V)  # Paste
+
+            # Using mixed formats
+            await interface.hotkey(Key.COMMAND, 'a')  # Select all
+            ```
+
+        Raises:
+            ValueError: If any key type is invalid or not recognized
+        """
+        actual_keys = []
+        for key in keys:
+            if isinstance(key, Key):
+                actual_keys.append(key.value)
+            elif isinstance(key, str):
+                # Try to convert to enum if it matches a known key
+                key_or_enum = Key.from_string(key)
+                actual_keys.append(key_or_enum.value if isinstance(key_or_enum, Key) else key_or_enum)
+            else:
+                raise ValueError(f"Invalid key type: {type(key)}. Must be Key enum or string.")
+        
+        await self._send_command("hotkey", {"keys": actual_keys})
 
     # Scrolling Actions
     async def scroll_down(self, clicks: int = 1) -> None:
-        for _ in range(clicks):
-            await self.hotkey("pagedown")
-
+        await self._send_command("scroll_down", {"clicks": clicks})
+        
     async def scroll_up(self, clicks: int = 1) -> None:
-        for _ in range(clicks):
-            await self.hotkey("pageup")
+        await self._send_command("scroll_up", {"clicks": clicks})
 
     # Screen Actions
     async def screenshot(
@@ -488,7 +539,7 @@ class MacOSComputerInterface(BaseComputerInterface):
         result = await self._send_command("get_accessibility_tree")
         if not result.get("success", False):
             raise RuntimeError(result.get("error", "Failed to get accessibility tree"))
-        return result.get("tree", {})
+        return result
 
     async def get_active_window_bounds(self) -> Dict[str, int]:
         """Get the bounds of the currently active window."""

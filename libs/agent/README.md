@@ -31,8 +31,13 @@ pip install "cua-agent[all]"
 # or install specific loop providers
 pip install "cua-agent[openai]" # OpenAI Cua Loop
 pip install "cua-agent[anthropic]" # Anthropic Cua Loop
+pip install "cua-agent[uitars]"    # UI-Tars support
 pip install "cua-agent[omni]" # Cua Loop based on OmniParser (includes Ollama for local models)
 pip install "cua-agent[ui]" # Gradio UI for the agent
+
+# For local UI-TARS with MLX support, you need to manually install mlx-vlm:
+pip install "cua-agent[uitars-mlx]"
+pip install git+https://github.com/ddupont808/mlx-vlm.git@stable/fix/qwen2-position-id # PR: https://github.com/Blaizzy/mlx-vlm/pull/349
 ```
 
 ## Run
@@ -49,7 +54,10 @@ async with Computer() as macos_computer:
       # model=LLM(provider=LLMProvider.ANTHROPIC)
       # or
       # loop=AgentLoop.OMNI,
-      # model=LLM(provider=LLMProvider.OLLAMA, model="gemma3")
+      # model=LLM(provider=LLMProvider.OLLAMA, name="gemma3")
+      # or
+      # loop=AgentLoop.UITARS,
+      # model=LLM(provider=LLMProvider.OAICOMPAT, name="ByteDance-Seed/UI-TARS-1.5-7B", provider_base_url="https://**************.us-east-1.aws.endpoints.huggingface.cloud/v1")
   )
 
   tasks = [
@@ -75,23 +83,27 @@ Refer to these notebooks for step-by-step guides on how to use the Computer-Use 
 
 ## Using the Gradio UI
 
-The agent includes a Gradio-based user interface for easy interaction. To use it:
+The agent includes a Gradio-based user interface for easier interaction.
+
+<div align="center">
+    <img src="../../img/agent_gradio_ui.png"/>
+</div>
+
+To use it:
 
 ```bash
 # Install with Gradio support
 pip install "cua-agent[ui]"
+```
 
-# Create a simple launcher script
+### Create a simple launcher script
+
 ```python
 # launch_ui.py
 from agent.ui.gradio.app import create_gradio_ui
 
 app = create_gradio_ui()
 app.launch(share=False)
-```
-
-# Run the launcher
-python launch_ui.py
 ```
 
 ### Setting up API Keys
@@ -109,6 +121,8 @@ export ANTHROPIC_API_KEY=your_anthropic_key_here
 OPENAI_API_KEY=your_key ANTHROPIC_API_KEY=your_key python launch_ui.py
 ```
 
+Without these environment variables, the UI will show "No models available" for the corresponding providers, but you can still use local models with the OMNI loop provider.
+
 ### Using Local Models
 
 You can use local models with the OMNI loop provider by selecting "Custom model..." from the dropdown. The default provider URL is set to `http://localhost:1234/v1` which works with LM Studio. 
@@ -118,41 +132,40 @@ If you're using a different local model server:
 - LocalAI: `http://localhost:8080/v1`
 - Ollama with OpenAI compat API: `http://localhost:11434/v1`
 
-To change the URL, modify the `provider_base_url` in your launcher script:
-
-```python
-# In your launcher script
-from agent.ui.gradio.app import create_gradio_ui
-from agent import LLM, LLMProvider
-
-# Create a custom model with a specific URL
-custom_model = LLM(
-    provider=LLMProvider.OAICOMPAT,
-    name="your-model-name",
-    provider_base_url="http://localhost:8000/v1"  # Change to your server URL
-)
-
-app = create_gradio_ui(custom_model=custom_model)
-app.launch()
-```
-
-Without these environment variables, the UI will show "No models available" for the corresponding providers, but you can still use local models with the OMNI loop provider.
-
 The Gradio UI provides:
 - Selection of different agent loops (OpenAI, Anthropic, OMNI)
 - Model selection for each provider
 - Configuration of agent parameters
 - Chat interface for interacting with the agent
 
-You can also embed the Gradio UI in your own application:
+### Using UI-TARS
 
-```python
-# Import directly in your application
-from agent.ui.gradio.app import create_gradio_ui
+The UI-TARS models are available in two forms:
 
-app = create_gradio_ui()
-app.launch()
-```
+1. **MLX UI-TARS models** (Default): These models run locally using MLXVLM provider
+   - `mlx-community/UI-TARS-1.5-7B-4bit` (default) - 4-bit quantized version
+   - `mlx-community/UI-TARS-1.5-7B-6bit` - 6-bit quantized version for higher quality
+
+   ```python
+   agent = ComputerAgent(
+       computer=macos_computer,
+       loop=AgentLoop.UITARS,
+       model=LLM(provider=LLMProvider.MLXVLM, name="mlx-community/UI-TARS-1.5-7B-4bit")
+   )
+   ```
+
+2. **OpenAI-compatible UI-TARS**: For using the original ByteDance model
+   - If you want to use the original ByteDance UI-TARS model via an OpenAI-compatible API, follow the [deployment guide](https://github.com/bytedance/UI-TARS/blob/main/README_deploy.md)
+   - This will give you a provider URL like `https://**************.us-east-1.aws.endpoints.huggingface.cloud/v1` which you can use in the code or Gradio UI:
+
+   ```python 
+   agent = ComputerAgent(
+       computer=macos_computer,
+       loop=AgentLoop.UITARS,
+       model=LLM(provider=LLMProvider.OAICOMPAT, name="tgi", 
+                provider_base_url="https://**************.us-east-1.aws.endpoints.huggingface.cloud/v1")
+   )
+   ```
 
 ## Agent Loops
 
@@ -162,6 +175,7 @@ The `cua-agent` package provides three agent loops variations, based on differen
 |:-----------|:-----------------|:------------|:-------------|
 | `AgentLoop.OPENAI` | • `computer_use_preview` | Use OpenAI Operator CUA model | Not Required |
 | `AgentLoop.ANTHROPIC` | • `claude-3-5-sonnet-20240620`<br>• `claude-3-7-sonnet-20250219` | Use Anthropic Computer-Use | Not Required |
+| `AgentLoop.UITARS` | • `mlx-community/UI-TARS-1.5-7B-4bit` (default)<br>• `mlx-community/UI-TARS-1.5-7B-6bit`<br>• `ByteDance-Seed/UI-TARS-1.5-7B` (via openAI-compatible endpoint) | Uses UI-TARS models with MLXVLM (default) or OAICOMPAT providers | Not Required |
 | `AgentLoop.OMNI` | • `claude-3-5-sonnet-20240620`<br>• `claude-3-7-sonnet-20250219`<br>• `gpt-4.5-preview`<br>• `gpt-4o`<br>• `gpt-4`<br>• `phi4`<br>• `phi4-mini`<br>• `gemma3`<br>• `...`<br>• `Any Ollama or OpenAI-compatible model` | Use OmniParser for element pixel-detection (SoM) and any VLMs for UI Grounding and Reasoning | OmniParser |
 
 ## AgentResponse
@@ -202,3 +216,10 @@ async for result in agent.run(task):
           print("\nTool Call Output:")
           print(output)
 ```
+
+**Note on Settings Persistence:**
+
+*   The Gradio UI automatically saves your configuration (Agent Loop, Model Choice, Custom Base URL, Save Trajectory state, Recent Images count) to a file named `.gradio_settings.json` in the project's root directory when you successfully run a task.
+*   This allows your preferences to persist between sessions.
+*   API keys entered into the custom provider field are **not** saved in this file for security reasons. Manage API keys using environment variables (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) or a `.env` file.
+*   It's recommended to add `.gradio_settings.json` to your `.gitignore` file.
